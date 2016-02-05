@@ -1,0 +1,114 @@
+public class MainActivity extends ActionBarActivity {
+
+    ImageView img;
+    private Bitmap bitmap;
+    ImageView foto;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+       img = (ImageView) findViewById(R.id.imageView);
+        img.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                abrirCamera();
+            }
+        });
+
+        foto =  (ImageView) findViewById(R.id.imageView2);
+        foto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                abrirFoto();
+            }
+        });
+    }
+
+   public void abrirCamera(){
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, 0);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode,data);
+        InputStream stream =null;
+        if(requestCode == 1 && resultCode == RESULT_OK){
+            try{
+                if(bitmap !=null){
+                    bitmap.recycle();
+                }
+                stream = getContentResolver().openInputStream(data.getData());
+                bitmap = BitmapFactory.decodeStream(stream);
+                foto.setImageBitmap(resizeImage(this,bitmap,700,600));
+            }catch (FileNotFoundException e){
+                e.printStackTrace();
+            }finally {
+                if(stream !=null)
+                    try{
+                        stream.close();
+                    }catch (IOException e){
+                        e.printStackTrace();
+                    }
+            }
+        }
+    }
+
+    private static Bitmap resizeImage(Context context, Bitmap bmpOriginal, float newWidth, float newHeight){
+        Bitmap novoBmp = null;
+        int w = bmpOriginal.getWidth();
+        int h = bmpOriginal.getHeight();
+
+        float densityFactor = context.getResources().getDisplayMetrics().density;
+        float novoW = newWidth * densityFactor;
+        float novoH = newHeight * densityFactor;
+
+        //Calcula escala em percentual do tamanho original para o novo
+        float scalaW = novoW/w;
+        float scalaH = novoH/h;
+
+        //Criando uma matrix para manipula
+        //
+        // ção da imagem Bitmap
+        Matrix matrix = new Matrix();
+
+        //Definindo a proporção da escala para o matrix
+        matrix.postScale(scalaW, scalaH);
+
+        //Criando o novo Bitmap com o novo tamanho
+        novoBmp = Bitmap.createBitmap(bmpOriginal,0,0,w,h,matrix,true);
+
+        return novoBmp;
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void abrirFoto(){
+        Intent intent1 = new Intent(Intent.ACTION_GET_CONTENT);
+        intent1.setType("image/*");
+        intent1.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(intent1,1);
+    }
+}
